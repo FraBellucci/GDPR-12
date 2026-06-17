@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>MOD12 – Trova i Dark Pattern: Banner Cookie</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+body{background:linear-gradient(135deg,#e65100,#f57c00);display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
+.container{width:800px;height:550px;background:#fff;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column}
+.header{background:linear-gradient(135deg,#e65100,#f57c00);color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.header h1{font-size:15px;font-weight:700}.header p{font-size:11px;opacity:.8;margin-top:1px}
+button{padding:6px 12px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.btn-white{background:#fff;color:#e65100}.btn-white:hover{background:#fff3e0}
+.btn-outline{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)}.btn-outline:hover{background:rgba(255,255,255,.25)}
+.btn-group{display:flex;gap:8px}
+.status-bar{display:flex;align-items:center;gap:16px;padding:7px 14px;background:#f5f5f5;border-bottom:1px solid #e0e0e0;flex-shrink:0;font-size:12px;color:#555}
+.found-badge{background:#e65100;color:#fff;border-radius:20px;padding:2px 12px;font-size:12px;font-weight:700}
+.lives{display:flex;gap:3px;font-size:13px}
+.content{flex:1;display:flex;overflow:hidden;min-height:0}
+.image-area{flex:2;position:relative;overflow:hidden;background:#fff3e0}
+.workplace-image{width:100%;height:100%;object-fit:cover;display:block}
+.hotspot{position:absolute;width:38px;height:38px;border-radius:20%;background:none;border:3px dashed #f9a825;cursor:pointer;transform:translate(-50%,-50%);transition:all .2s}
+.hotspot:hover{background:rgba(255,235,59,.6);transform:translate(-50%,-50%) scale(1.15)}
+.hotspot.found{background:rgba(46,125,50,.7);border:3px solid #2e7d32;cursor:default;animation:pop .3s ease}
+.hotspot.found::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-weight:700;font-size:16px}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(0)}60%{transform:translate(-50%,-50%) scale(1.3)}100%{transform:translate(-50%,-50%) scale(1)}}
+.panel{flex:1;display:flex;flex-direction:column;padding:10px 12px;gap:7px;border-left:1px solid #e0e0e0;overflow-y:auto;background:#fafafa}
+.panel h2{font-size:13px;font-weight:700;color:#e65100}
+.error-list{display:flex;flex-direction:column;gap:5px;flex:1}
+.error-item{background:#fff;border:2px solid #e0e0e0;border-radius:7px;padding:7px 10px;font-size:11px;color:#777;line-height:1.4;transition:all .3s}
+.error-item.found-item{border-color:#2e7d32;background:#e8f5e9;color:#1b5e20;font-weight:600}
+.error-item.found-item::before{content:'✓ '}
+.hint-box{background:#fff3e0;border-left:3px solid #f57c00;border-radius:5px;padding:7px 9px;font-size:10px;color:#e65100;line-height:1.5}
+.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;justify-content:center;align-items:center;z-index:500;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.popup-box{background:#fff;border-radius:10px;padding:20px 22px;max-width:380px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.popup-box h3{color:#e65100;font-size:14px;margin-bottom:8px;border-bottom:1px solid #eee;padding-bottom:7px}
+.popup-box p{font-size:12px;line-height:1.6;color:#444}
+.popup-close{background:linear-gradient(135deg,#e65100,#f57c00);color:#fff;padding:8px 22px;font-size:13px;border-radius:7px;width:100%;margin-top:14px;cursor:pointer;border:none;font-weight:600}
+.win-overlay{position:absolute;inset:0;background:rgba(230,81,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:400;animation:fadeIn .4s}
+.win-overlay h2{color:#fff;font-size:22px;font-weight:700}
+.win-overlay p{color:#ffe0b2;font-size:13px;text-align:center;max-width:320px}
+.win-stats{display:flex;gap:10px}
+.win-stat{background:rgba(255,255,255,.15);border-radius:8px;padding:8px 16px;color:#fff;font-size:13px;font-weight:700;text-align:center}
+.win-stat span{display:block;font-size:10px;opacity:.8;margin-bottom:2px}
+.btn-win{background:#fff;color:#e65100;padding:9px 24px;font-size:13px;border-radius:8px;font-weight:700;margin-top:4px;cursor:pointer;border:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div><h1>🍪 Banner Cookie – Trova i 5 Dark Pattern</h1><p>Modulo 12 – Cookie, tracciamento e consenso</p></div>
+    <div class="btn-group">
+      <button class="btn-outline" onclick="resetGame()">🔄 Rigioca</button>
+      <button class="btn-white" onclick="window.close()">Torna al corso</button>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="found-badge">Trovati: <span id="foundCount">0</span>/5</span>
+    <span>Errori: <b id="errCount" style="color:#c62828">0</b></span>
+    <div class="lives" id="livesEl"></div>
+    <span style="margin-left:auto;font-size:11px;color:#888">Clicca sui dark pattern nel banner cookie</span>
+  </div>
+  <div class="content">
+    <div class="image-area" id="imageArea">
+      <img src="images/cookies.png" alt="Banner cookie con dark pattern" class="workplace-image">
+      <!-- HOTSPOT 1: Pulsante "Accetta tutto" molto visibile, "Rifiuta" nascosto -->
+      <div class="hotspot" data-id="1" style="top:84%;left:96%"
+           data-title="Asimmetria visiva Accetta/Rifiuta"
+           data-text="Il pulsante 'Accetta tutto' è grande, colorato e prominente, mentre 'Rifiuta' o 'Gestisci preferenze' è piccolo, in grigio chiaro o come semplice link. Questo crea un'asimmetria visiva che manipola la scelta. Il Garante e le Linee Guida EDPB richiedono che le opzioni di consenso e rifiuto siano ugualmente accessibili."></div>
+      <!-- HOTSPOT 2: Caselle pre-spuntate -->
+      <div class="hotspot" data-id="2" style="top:65%;left:96%; height:120px"
+           data-title="Caselle pre-spuntate"
+           data-text="Le opzioni di consenso per marketing e profilazione sono già selezionate per default. Questo viola l'art. 4 GDPR: il consenso deve essere un'azione positiva e inequivocabile. Le caselle non possono essere pre-flaggate. L'utente deve attivamente selezionarle per esprimere il consenso."></div>
+      <!-- HOTSPOT 3: Assenza del pulsante di rifiuto di primo livello -->
+      <div class="hotspot" data-id="3" style="top:84%;left:50%"
+           data-title="Nessun rifiuto in primo livello"
+           data-text="Il banner non offre la possibilità di rifiutare tutti i cookie non essenziali direttamente, ma obbliga l'utente ad entrare in un sotto-menu 'Impostazioni' con molti click. Il Garante italiano (Provvedimento 2021) impone che il rifiuto sia possibile al primo livello del banner, con la stessa facilità dell'accettazione."></div>
+      <!-- HOTSPOT 4: Cookie analytics considerati tecnici -->
+      <div class="hotspot" data-id="4" style="top:64%;left:20%"
+           data-title="Cookie analytics classificati come tecnici"
+           data-text="Il banner classifica i cookie di analisi statistica (analytics) come 'cookie tecnici necessari', esentandoli dal consenso. Il Garante ha chiarito che i cookie analytics sono esenti solo se usati in forma aggregata e anonima, e solo per il monitoraggio del sito da parte del titolare. Se condivisi con terze parti, richiedono consenso."></div>
+      <!-- HOTSPOT 5: Interfaccia a labirinto per revocare -->
+      <div class="hotspot" data-id="5" style="top:94%;left:40%; width: 300px;"
+           data-title="Difficoltà eccessiva nella revoca del consenso"
+           data-text="La procedura per revocare il consenso già espresso è nascosta, richiede molti passaggi e non è raggiungibile dalla pagina principale. L'art. 7(3) GDPR stabilisce che revocare il consenso deve essere altrettanto facile quanto darlo. Un link 'Gestisci cookie' deve essere sempre visibile e accessibile."></div>
+    </div>
+    <div class="panel">
+      <h2>🚩 Dark pattern da trovare</h2>
+      <div class="error-list">
+        <div class="error-item" id="ei-1">Dark pattern 1</div>
+        <div class="error-item" id="ei-2">Dark pattern 2</div>
+        <div class="error-item" id="ei-3">Dark pattern 3</div>
+        <div class="error-item" id="ei-4">Dark pattern 4</div>
+        <div class="error-item" id="ei-5">Dark pattern 5</div>
+      </div>
+      <div class="hint-box">📌 Cerca i dark patterns nel banner cookies.</div>
+    </div>
+  </div>
+</div>
+<script>
+const MAX_LIVES=5;let found=[],errors=0,lives=MAX_LIVES;
+function initGame(){found=[];errors=0;lives=MAX_LIVES;document.getElementById('foundCount').textContent='0';document.getElementById('errCount').textContent='0';document.querySelectorAll('.hotspot').forEach(h=>h.classList.remove('found'));document.querySelectorAll('.error-item').forEach((e,i)=>{e.classList.remove('found-item');e.textContent='Dark pattern '+(i+1);});document.querySelector('.win-overlay')?.remove();renderLives();setupHotspots();setupMissClick();}
+function renderLives(){const el=document.getElementById('livesEl');el.innerHTML='';for(let i=0;i<MAX_LIVES;i++){const s=document.createElement('span');s.textContent=i<lives?'❤️':'🖤';el.appendChild(s);}}
+function setupHotspots(){document.querySelectorAll('.hotspot').forEach(h=>{h.onclick=(e)=>{e.stopPropagation();const id=parseInt(h.dataset.id);if(found.includes(id))return;found.push(id);h.classList.add('found');const ei=document.getElementById('ei-'+id);ei.classList.add('found-item');ei.textContent='Dark pattern '+id+' – '+h.dataset.title;document.getElementById('foundCount').textContent=found.length;showPopup(h.dataset.title,h.dataset.text);};});}
+function setupMissClick(){document.getElementById('imageArea').onclick=(e)=>{if(e.target.classList.contains('hotspot')||e.target.closest('.hotspot'))return;errors++;lives=Math.max(0,lives-1);document.getElementById('errCount').textContent=errors;renderLives();if(lives<=0)showWin();};}
+function showPopup(title,text){const overlay=document.createElement('div');overlay.className='popup';overlay.innerHTML=`<div class="popup-box"><h3>🚩 ${title}</h3><p>${text}</p><button class="popup-close" onclick="this.closest('.popup').remove();checkWin()">Ho capito – Continua</button></div>`;document.body.appendChild(overlay);}
+function checkWin(){if(found.length===5)showWin();}
+function showWin(){const area=document.getElementById('imageArea');const win=document.createElement('div');win.className='win-overlay';const allFound=found.length===5;win.innerHTML=`<div style="font-size:52px">${allFound?'🎉':'⏱️'}</div><h2>${allFound?'Nessun dark pattern!':'Gioco terminato!'}</h2><p>${allFound?'Hai individuato tutti i dark pattern. Un banner cookie conforme deve avere: parità visiva, nessuna pre-selezione, rifiuto al primo livello e revoca semplice.':'Hai esaurito i tentativi. Ricorda: parità visiva, no pre-flagging, rifiuto accessibile e revoca semplice sono i requisiti chiave.'}</p><div class="win-stats"><div class="win-stat"><span>Trovati</span>${found.length}/5</div><div class="win-stat"><span>Errori click</span>${errors}</div></div><button class="btn-win" onclick="resetGame()">🔄 Rigioca</button>`;area.appendChild(win);}
+function resetGame(){initGame();}
+initGame();
+</script>
+</body>
+</html>
